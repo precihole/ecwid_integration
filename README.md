@@ -4,4 +4,4 @@ Ecwid Integration
 
 #### License
 
-mit
+mit# ecwid_integration
