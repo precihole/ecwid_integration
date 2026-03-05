@@ -37,7 +37,7 @@ class EcwidLog(Document):
 				shipping_address = billing_address if same else get_or_create_address(customer_name, shipping_person, "Shipping", tax, 1)
 				
 				# 7) Sales Order
-				so_name = make_sales_order(order, customer_name, billing_address, shipping_address, tax)
+				so_name = make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list)
 				doc.reference_doctype = "Sales Order"
 				doc.reference_name = so_name
 				doc.status = "Completed"
@@ -143,7 +143,7 @@ def get_or_create_address(customer_name, person, addr_type, tax, make_shipping_f
 
 	return addr.name
 
-def make_sales_order(order, customer_name, billing_address, shipping_address, tax):
+def make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list):
 	order_id = order.get("id") or order.get("orderNumber")
 
 	# prevent duplicates
@@ -181,9 +181,8 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 		"delivery_date":add_days(nowdate(), 3),
 		"po_date":nowdate(),
 		"price_list_currency": "INR",
-		"selling_price_list": "Job-Work",
+		"selling_price_list": default_price_list,
 		"customer_address": billing_address,
-		"business_category_c":"Local",
 		"shipping_address_name": shipping_address or billing_address,
 		"po_no": str(order_id),
 		"items": so_items
@@ -191,10 +190,10 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 
 	# taxes
 	if tax == "Instate":
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output SGST - PMTPL", "description": "Output SGST"})
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output CGST - PMTPL", "description": "Output CGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output SGST - PSPL", "description": "Output SGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output CGST - PSPL", "description": "Output CGST"})
 	else:
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output IGST - PMTPL", "description": "Output IGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output IGST - PSPL", "description": "Output IGST"})
 
 	so.save(ignore_permissions=True)
 	return so.name

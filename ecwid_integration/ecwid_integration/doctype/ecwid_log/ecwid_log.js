@@ -6,7 +6,7 @@ frappe.ui.form.on("Ecwid Log", {
 
 		// Add Retry Button
 		frm.add_custom_button(__('Retry'), function () {
-
+			frm.set_value("status","Pending")
 			frm.save();
 			
 		});
