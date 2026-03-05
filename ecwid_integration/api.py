@@ -1,6 +1,6 @@
 import frappe
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def create_ecwid_order():
     payload = dict(frappe.form_dict) if frappe.form_dict else {}
 
