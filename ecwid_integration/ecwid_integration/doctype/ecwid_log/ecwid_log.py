@@ -36,8 +36,12 @@ class EcwidLog(Document):
 				billing_address = get_or_create_address(customer_name, billing_person, "Billing", tax, 1 if same else 0,order)
 				shipping_address = billing_address if same else get_or_create_address(customer_name, shipping_person, "Shipping", tax, 1)
 				
+				#Shipping rate if added
+				shippingOption = order.get("shippingOption") or {}
+				shippingRate = shippingOption.get("shippingRate") or {}
+
 				# 7) Sales Order
-				so_name = make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list)
+				so_name = make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list,shippingRate)
 				doc.reference_doctype = "Sales Order"
 				doc.reference_name = so_name
 				doc.status = "Completed"
@@ -143,7 +147,7 @@ def get_or_create_address(customer_name, person, addr_type, tax, make_shipping_f
 
 	return addr.name
 
-def make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list):
+def make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list,shippingRate):
 	order_id = order.get("id") or order.get("orderNumber")
 
 	# prevent duplicates
@@ -169,7 +173,14 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 			"description": it.get("name") or "",
 			"uom": "Nos"
 		})
-
+	if shippingRate and shippingRate > 0:
+		so_items.append({
+				"item_code": "Shipping (18%)",
+				"qty": 1,
+				"rate": shippingRate,
+				"description": "Shipping Charges",
+				"uom": "Nos"
+			})
 	if not so_items:
 		frappe.throw("No items found in Ecwid order {0}".format(order_id))
 
