@@ -115,7 +115,7 @@ def get_or_create_address(customer_name, person, addr_type, tax, make_shipping_f
 	if not person:
 		return None
 
-	title = f"{customer_name}-{addr_type}"
+	title = customer_name
 	existing = frappe.db.get_value(
 		"Address",
 		{"address_title": title, "address_type": addr_type},
