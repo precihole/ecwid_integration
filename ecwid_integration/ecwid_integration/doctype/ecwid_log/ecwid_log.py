@@ -35,7 +35,14 @@ class EcwidLog(Document):
 				same = (billing_person.get("street") == shipping_person.get("street") and billing_person.get("city") == shipping_person.get("city") and billing_person.get("postalCode") == shipping_person.get("postalCode") and (billing_person.get("stateOrProvinceName") or billing_person.get("stateOrProvinceCode")) == (shipping_person.get("stateOrProvinceName") or shipping_person.get("stateOrProvinceCode")))
 				billing_address = get_or_create_address(customer_name, billing_person, "Billing", tax, 1 if same else 0,order)
 				shipping_address = billing_address if same else get_or_create_address(customer_name, shipping_person, "Shipping", tax, 1)
+				# frappe.msgprint(customer_name)
 				
+				# customer = frappe.get_doc({
+				# 	"doctype": "Customer",
+				# 	"Customer":customer_name
+				# 	})
+				# if not billing_address:
+					
 				#Shipping rate if added
 				shippingOption = order.get("shippingOption") or {}
 				shippingRate = shippingOption.get("shippingRate") or {}
@@ -91,7 +98,9 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 			"default_currency": "INR",
 			"default_price_list": default_price_list,
 			"tax_category": tax,
-			"territory": state or "India"
+			"territory": state or "India",
+			"gender":order.get("gender") or "",
+			"source_type":order.get("source") or ""
 		}).insert(ignore_permissions=True)
 		customer_name = cust.name
 
@@ -144,7 +153,7 @@ def get_or_create_address(customer_name, person, addr_type, tax, make_shipping_f
 		"is_shipping_address": 1 if make_shipping_flag else 0,
 		"links": [{"link_doctype": "Customer", "link_name": customer_name}]
 	}).insert(ignore_permissions=True)
-
+	
 	return addr.name
 
 def make_sales_order(order, customer_name, billing_address, shipping_address, tax,default_price_list,shippingRate):
@@ -169,7 +178,7 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 		so_items.append({
 			"item_code": item_code,
 			"qty": it.get("quantity") or 1,
-			"rate": it.get("price") or 0,
+			"rate": (it.get("price") / 1.18)  or 0,
 			"description": it.get("name") or "",
 			"uom": "Nos"
 		})
@@ -198,13 +207,13 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 		"po_no": str(order_id),
 		"items": so_items
 	}).insert(ignore_permissions=True)
-
+	abbr = frappe.db.get_value("Company",so.company,"abbr")
 	# taxes
 	if tax == "Instate":
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output SGST - PSPL", "description": "Output SGST"})
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output CGST - PSPL", "description": "Output CGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": f"Output SGST - {abbr}", "description": "Output SGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": f"Output CGST - {abbr}", "description": "Output CGST"})
 	else:
-		so.append("taxes", {"charge_type": "On Net Total", "account_head": "Output IGST - PSPL", "description": "Output IGST"})
+		so.append("taxes", {"charge_type": "On Net Total", "account_head": f"Output IGST - {abbr}", "description": "Output IGST"})
 
 	so.save(ignore_permissions=True)
 	return so.name
