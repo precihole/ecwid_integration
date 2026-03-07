@@ -186,7 +186,7 @@ def make_sales_order(order, customer_name, billing_address, shipping_address, ta
 		so_items.append({
 				"item_code": "Shipping (18%)",
 				"qty": 1,
-				"rate": shippingRate,
+				"rate": (shippingRate / 1.18),
 				"description": "Shipping Charges",
 				"uom": "Nos"
 			})
