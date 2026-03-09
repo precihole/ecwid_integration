@@ -9,6 +9,35 @@ from datetime import datetime
 
 
 class EcwidLog(Document):
+	def retry_failed_ecwid_logs():
+		settings = frappe.get_single("Ecwid Settings")
+
+		if not settings.enable_retry_sales_order_generation:
+			return
+
+		failed_logs = frappe.get_all(
+			"Ecwid Log",
+			filters={
+				"status": "Failed",
+				"reference_name": ["is", "not set"]
+			},
+			fields=["name"],
+			limit=20
+		)
+		for row in failed_logs:
+			try:
+				doc = frappe.get_doc("Ecwid Log", row.name)
+
+				# optional: mark in progress
+				doc.db_set("status", "Pending")
+				doc.db_set("error", "")
+				doc.save(ignore_permissions=True)
+				frappe.db.commit()
+
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), f"Retry failed for Ecwid Log {row.name}")
+				frappe.db.rollback()
+
 	def before_save(doc):
 		try:
 			settings = frappe.get_single("Ecwid Settings")

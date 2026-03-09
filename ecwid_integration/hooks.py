@@ -242,3 +242,10 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+scheduler_events = {
+	"cron": {
+		"*/15 * * * *": [
+			"ecwid_integration.ecwid_integration.doctype.ecwid_log.ecwid_log.retry_failed_ecwid_logs"
+		]
+	}
+}
