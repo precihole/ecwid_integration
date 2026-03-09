@@ -5,6 +5,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.integrations.utils import make_get_request
 from frappe.utils import nowdate, add_days
+from datetime import datetime
 
 
 class EcwidLog(Document):
@@ -34,8 +35,9 @@ class EcwidLog(Document):
 				# If billing == shipping, mark billing as shipping too
 				same = (billing_person.get("street") == shipping_person.get("street") and billing_person.get("city") == shipping_person.get("city") and billing_person.get("postalCode") == shipping_person.get("postalCode") and (billing_person.get("stateOrProvinceName") or billing_person.get("stateOrProvinceCode")) == (shipping_person.get("stateOrProvinceName") or shipping_person.get("stateOrProvinceCode")))
 				billing_address = get_or_create_address(customer_name, billing_person, "Billing", tax, 1 if same else 0,order)
-				shipping_address = billing_address if same else get_or_create_address(customer_name, shipping_person, "Shipping", tax, 1)
-				# frappe.msgprint(customer_name)
+				shipping_address = billing_address if same else get_or_create_address(customer_name, shipping_person, "Shipping", tax, 1,order)
+				
+				# frappe.throw(billing_address)
 				
 				# customer = frappe.get_doc({
 				# 	"doctype": "Customer",
@@ -85,8 +87,13 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 		customer_name = frappe.db.get_value("Customer", {"email_id": email}, "name")
 
 	# Fallback by customer_name
-	if not customer_name:
-		customer_name = frappe.db.get_value("Customer", {"customer_name": cust_name}, "name")
+	# if not customer_name:
+	# 	customer_name = frappe.db.get_value("Customer", {"customer_name": cust_name}, "name")
+	extraFields = order.get("extraFields") or {}
+	gender = extraFields.get("i4k0z5t")
+	source = extraFields.get("z2mqlos")
+	dob = extraFields.get("0fuesbg")
+	dt = datetime.strptime(dob, "%Y-%m-%d %H:%M:%S %z")
 
 	# Create if missing
 	if not customer_name:
@@ -99,11 +106,11 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 			"default_price_list": default_price_list,
 			"tax_category": tax,
 			"territory": state or "India",
-			"gender":order.get("gender") or "",
-			"source_type":order.get("source") or ""
+			"gender":gender or "",
+			"source_type":source or "",
+			"custom_birth_date":dt.date() or ""
 		}).insert(ignore_permissions=True)
 		customer_name = cust.name
-
 		# Contact
 		if email or phone:
 			contact = frappe.get_doc({
@@ -131,10 +138,28 @@ def get_or_create_address(customer_name, person, addr_type, tax, make_shipping_f
 	title = customer_name
 	existing = frappe.db.get_value(
 		"Address",
-		{"address_title": title, "address_type": addr_type},
+		{"address_title": title, "address_type": addr_type,"pincode":person.get("postalCode")},
 		"name"
 	)
 	if existing:
+		link_exists = frappe.db.exists(
+			"Dynamic Link",
+			{
+				"parenttype": "Address",
+				"parent": existing,
+				"link_doctype": "Customer",
+				"link_name": customer_name
+			}
+		)
+
+		if not link_exists:
+			addr = frappe.get_doc("Address", existing)
+			addr.append("links", {
+				"link_doctype": "Customer",
+				"link_name": customer_name
+			})
+			addr.save(ignore_permissions=True)
+
 		return existing
 
 	addr = frappe.get_doc({

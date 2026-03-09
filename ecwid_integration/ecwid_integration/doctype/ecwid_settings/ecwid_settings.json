@@ -6,9 +6,14 @@
  "engine": "InnoDB",
  "field_order": [
   "secret_token",
+  "column_break_vebp",
   "store_id",
+  "section_break_bduf",
+  "default_customer_group",
+  "column_break_odwm",
   "default_price_list",
-  "default_customer_group"
+  "section_break_aokr",
+  "enable_retry_sales_order_generation"
  ],
  "fields": [
   {
@@ -32,14 +37,37 @@
    "fieldtype": "Link",
    "label": "Default Customer Group",
    "options": "Customer Group"
+  },
+  {
+   "fieldname": "section_break_aokr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "description": "Automatically Retry Sales Order Generation for Ecwid Server Errors",
+   "fieldname": "enable_retry_sales_order_generation",
+   "fieldtype": "Check",
+   "label": " Enable Retry Sales Order Generation"
+  },
+  {
+   "fieldname": "column_break_vebp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bduf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_odwm",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-04 13:55:12.887772",
- "modified_by": "Administrator",
+ "modified": "2026-03-07 12:03:41.769235",
+ "modified_by": "midhat@preciholesports.com",
  "module": "Ecwid Integration",
  "name": "Ecwid Settings",
  "owner": "Administrator",
