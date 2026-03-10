@@ -5,8 +5,6 @@ import frappe
 from frappe.model.document import Document
 from frappe.integrations.utils import make_get_request
 from frappe.utils import nowdate, add_days
-from datetime import datetime
-
 
 class EcwidLog(Document):
 	def retry_failed_ecwid_logs():
@@ -123,7 +121,7 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 	source = extraFields.get("z2mqlos")
 	dob = extraFields.get("0fuesbg")
 	if dob:
-		dt = datetime.strptime(dob, "%Y-%m-%d %H:%M:%S %z")
+		dt = str(frappe.utils.get_datetime(dob).date())
 	else:
 		dt = ""
 	# Create if missing
