@@ -122,8 +122,10 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 	gender = extraFields.get("i4k0z5t")
 	source = extraFields.get("z2mqlos")
 	dob = extraFields.get("0fuesbg")
-	dt = datetime.strptime(dob, "%Y-%m-%d %H:%M:%S %z")
-
+	if dob:
+		dt = datetime.strptime(dob, "%Y-%m-%d %H:%M:%S %z")
+	else:
+		dt = ""
 	# Create if missing
 	if not customer_name:
 		cust = frappe.get_doc({
@@ -137,7 +139,7 @@ def get_or_create_customer(order, tax,default_price_list,default_customer_group)
 			"territory": state or "India",
 			"gender":gender or "",
 			"source_type":source or "",
-			"custom_birth_date":dt.date() or ""
+			"custom_birth_date":dt
 		}).insert(ignore_permissions=True)
 		customer_name = cust.name
 		# Contact
